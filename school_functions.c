@@ -73,6 +73,7 @@ void printstudent(struct Student **head)
     printf("-----------------------------\n"); 
 }
 
+// ADD TEACHER
 void addTeacher(struct Teacher **head, int *count)
 {
     struct Teacher* newTeacher =malloc(sizeof(struct Teacher));
@@ -100,6 +101,15 @@ void addTeacher(struct Teacher **head, int *count)
         exit(-1);
     }
     getUserInput(&subjectName);
+
+    // check if inputted subject already exists, if so then free the memory and exit this function
+    if (subjectExists(*head, subjectName) == 1) {
+        printf("Subject %s already exists. Multiple teachers for the same subject are currently unsupported - please provide a unique subject when creating a new teacher. Returning to menu...\n", subjectName);
+        free(newTeacher);
+        free(subjectName);
+        free(teacherName);
+    }
+
     newTeacher->subjectname = subjectName;
 
     newTeacher->next = NULL;
@@ -378,6 +388,10 @@ void printStudentGrades(struct Student **head)
         for (int i = 0 ; i < student->gradecount; i++) {
             printf("%s: %s\n", student->grades[i]->subjectname, student->grades[i]->gradegiven);
         }
+        if (student->gradecount == 0) {
+            printf("(None so far)\n");
+        }
+        printf("\n");
         student=student->next;
     }
     printf("-----------------------------\n"); 
@@ -411,7 +425,7 @@ void findTeachersBySubName(struct Teacher **head)
 
 }
 
-void findStudentBySubName(struct Student **head) 
+void findStudentBySubName(struct Student **head, struct Teacher **teacherList) 
 {
     // Prompt user for name of subject
     char *subjectName = malloc(MAX_LENGTH);
@@ -422,8 +436,15 @@ void findStudentBySubName(struct Student **head)
     printf("Please enter subject name: ");
     getUserInput(&subjectName);
 
+    // check if the subject exists, if not then return to menu
+    if (subjectExists(*teacherList, subjectName) != 1) {
+        printf("Subject '%s' does not exist. Please add it via Menu Option 2.\n", subjectName);
+        return;
+    }
+
     // Loop through students
     printf("Students that study %s:\n", subjectName);
+    int numOfStudents = 0;
     struct Student *student = *head;
     while (student->next != NULL)
     {
@@ -431,11 +452,14 @@ void findStudentBySubName(struct Student **head)
         for (int i = 0; i < student->gradecount; i++) {
             if (strncasecmp(subjectName, student->grades[i]->subjectname, strlen(subjectName)) == 0) {
                 printf("%s %s - Grade: %s\n", student->firstname, student->lastname, student->grades[i]->gradegiven);
+                numOfStudents++;
             }
         }
         student = student->next;
     }
-
+    if (numOfStudents == 0) {
+        printf("No students found.\n");
+    }
 }
 
 void findStudentGradeByStudentIdSubName(struct Student **head, struct Teacher **teacherList) 
@@ -492,6 +516,52 @@ void findStudentGradeByStudentIdSubName(struct Student **head, struct Teacher **
 
 }
 
+void findStudentsByTeacher(struct Teacher **teacherList, struct Student **studentList)
+{  
+    // Prompt the user for the ID of the teacher
+    printf("Please enter the teacher's ID: ");
+    char *teacherID = malloc(10);
+    if (teacherID == NULL) {
+        printf("Error: Out of memory\r\n");
+        exit(-1);
+    }
+    getUserInput(&teacherID);
+    int teacherIDInt = strtol(teacherID, NULL, 10);
+
+    // Go through list of teachers and check if a teacher with this ID exists
+    struct Teacher *currentTeacher = *teacherList;
+    while (currentTeacher->next != NULL) {
+        if (currentTeacher->tid == teacherIDInt) {
+            printf("Teacher found: %s, %s\n", currentTeacher->teachername, currentTeacher->subjectname);
+            break; // if student exists, go to this label
+        }
+        currentTeacher = currentTeacher->next;
+    }
+    if (currentTeacher->next == NULL) {
+        printf("No Teacher Found. Returning to menu...\n");
+        return;
+    }
+    // Loop through students
+    printf("Students taught by %s:\n", currentTeacher->teachername);
+    int numOfStudents = 0;
+    struct Student *student = *studentList;
+    while (student->next != NULL)
+    {
+        // check for each student if the provided subject name matches any of the subjects they do - if they do then print the student with their results
+        for (int i = 0; i < student->gradecount; i++) {
+            if (strncasecmp(currentTeacher->subjectname, student->grades[i]->subjectname, strlen(currentTeacher->subjectname)) == 0) {
+                printf("%s %s - Grade: %s\n", student->firstname, student->lastname, student->grades[i]->gradegiven);
+                numOfStudents++;
+            }
+        }
+        student = student->next;
+    }
+    if (numOfStudents == 0) {
+        printf("No students found.\n");
+    }
+
+}
+
 /* HELPER FUNCTIONS */ 
 
 // Get user input
@@ -530,3 +600,53 @@ int subjectExists(struct Teacher *teacherList, char *subjectName) {
     return 0;
 }
 
+// Delete List
+void destroy_list_teachers(struct Teacher **head) {
+    struct Teacher *next_node = NULL;
+    // repeatedly remove the first node of the list until the last node remains
+    while ((*head)->next != NULL) {
+        next_node = (*head)->next; // get the next node and store in next_node
+	    free((*head)->subjectname);
+        free((*head)->teachername);
+        free((*head)->next);
+        free(*head); // free the head to release the memory of the current node
+	    *head = next_node; // set the head to point at the previously next node
+    }
+    // free the head, the final node, to delete the list
+    free((*head)->subjectname);
+    free((*head)->teachername);
+    free((*head)->next);
+    free(*head);
+    head = NULL;
+}
+
+void destroy_list_students(struct Student **head) {
+    struct Student *next_node = NULL;
+    // repeatedly remove the first node of the list until the last node remains
+    while ((*head)->next != NULL) {
+        next_node = (*head)->next; // get the next node and store in next_node
+	    free((*head)->firstname);
+        free((*head)->lastname);
+        free((*head)->next);
+        for (int i = 0; i < (*head)->gradecount; i++) {
+            free((*head)->grades[i]->subjectname);
+            free((*head)->grades[i]->gradegiven);
+            free((*head)->grades[i]);
+        }
+        free((*head)->grades);
+        free(*head); // free the head to release the memory of the current node
+	    *head = next_node; // set the head to point at the previously next node
+    }
+    // free the head, the final node, to delete the list
+    free((*head)->firstname);
+    free((*head)->lastname);
+    free((*head)->next);
+    for (int i = 0; i < (*head)->gradecount; i++) {
+        free((*head)->grades[i]->subjectname);
+        free((*head)->grades[i]->gradegiven);
+        free((*head)->grades[i]);
+    }
+    free((*head)->grades);
+    free(*head);
+    head = NULL;
+}

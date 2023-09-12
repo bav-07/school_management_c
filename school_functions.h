@@ -41,9 +41,14 @@ void assignGrade2(struct Student **studentList, struct Teacher **teacherList);
 void assignGrade3(struct Student **studentList, struct Teacher **teacherList, int teacherCount);
 
 
-void findStudentBySubName(struct Student **head);
+void findStudentBySubName(struct Student **head, struct Teacher **teacherList);
 void findTeachersBySubName(struct Teacher **head);
 void findStudentGradeByStudentIdSubName(struct Student **head, struct Teacher **teacherList);
+void findStudentsByTeacher(struct Teacher **teacherList, struct Student **studentList);
 
 void getUserInput(char **input);
 int subjectExists(struct Teacher *teacherList, char *subjectName);
+void printStudentGrades(struct Student **head);
+
+void destroy_list_teachers(struct Teacher **head);
+void destroy_list_students(struct Student **head);
