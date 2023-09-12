@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include "school_functions.h"
 #include <string.h>
-
+#include <unistd.h>
 
 // Main function definition
 int main()
@@ -18,7 +18,7 @@ int main()
     
     int nos;
     int n;
-    char *nchar = malloc(10);
+    char *nchar;
 
     char choice;
     
@@ -31,7 +31,8 @@ int main()
         printf("\t Press 5 to find teachers by subject name\n");
         printf("\t Press 6 to find a student grade by student_id and subject name\n");
         printf("\t Press 7 to find students by teacher id\n");
-        printf("\t Press 8 to exit\n");
+        printf("\t Press 8 to find teachers by student id\n");
+        printf("\t Press 9 to exit\n");
         printf("\nEnter Choice :\n");
         fgets(&choice, 5, stdin);
     
@@ -39,9 +40,15 @@ int main()
             case '1':
                 // Add a student
                 printf("Enter the number of students you want to insert: ");
-                
+                nchar = malloc(10);
                 fgets(nchar, 100, stdin);
                 n = strtol(nchar, NULL, 10);
+                if (n == 0 || n == 0L) {
+                    printf("Invalid Input: Please enter a valid integer number greater than 0.\n");
+                    free(nchar);
+                    nchar = NULL;
+                    break;
+                }
                 printf("-----------------------------\n");
                 // createing a linked list for n numbers
                 for (int i = 0; i < n; i++)
@@ -50,13 +57,18 @@ int main()
                     addstudent(&studentListHead, &studentCount);
                 }
                 printstudent(&studentListHead);
+                free(nchar);
+                nchar = NULL;
                 break;
             case '2':
                 printf("Enter the number of teachers you want to insert: ");
+                nchar = malloc(10);
                 fgets(nchar, 100, stdin);
                 n = strtol(nchar, NULL, 10);
                 if (n == 0 || n == 0L) {
-                    printf("Please enter a valid integer number greater than 0.\n");
+                    printf("Invalid Input: Please enter a valid integer number greater than 0.\n");
+                    free(nchar);
+                    nchar = NULL;
                     break;
                 }
                 printf("-----------------------------\n");
@@ -66,6 +78,8 @@ int main()
                     addTeacher(&teacherListHead, &teacherCount);
                 }
                 printTeachers(&teacherListHead);
+                free(nchar);
+                nchar = NULL;
                 break;
             case '3':
                 if (teacherCount == 0) {
@@ -96,9 +110,17 @@ int main()
                 printf("-----------------------------\n");
                 break;
             case '8':
-                destroy_list_teachers(&teacherListHead);
-                destroy_list_students(&studentListHead);
-                free(nchar);
+                findTeachersByStudent(&teacherListHead, &studentListHead);
+                printf("-----------------------------\n");
+                break;
+            case '9':
+                printf("Quitting program: Goodbye!\n");
+                if (teacherCount != 0) {
+                    destroy_list_teachers(&teacherListHead);
+                }
+                if (studentCount != 0) {
+                    destroy_list_students(&studentListHead);
+                }
                 exit(1);
                 break;
             default:
@@ -106,6 +128,13 @@ int main()
 
         }     
     }
+    if (teacherCount != 0) {
+        destroy_list_teachers(&teacherListHead);
+    }
+    if (studentCount != 0) {
+        destroy_list_students(&studentListHead);
+    }
+    free(nchar);
     return 0;
 }
 
