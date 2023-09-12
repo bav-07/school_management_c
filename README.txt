@@ -1,3 +1,5 @@
+GitHub Repo: https://github.com/bav-07/school_management_c
+
 Tasks Completed:
 - Add students and the subjects they study
 - Add teachers and the subject they teach (1 subject per teacher)
